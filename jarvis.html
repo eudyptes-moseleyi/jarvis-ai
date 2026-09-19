@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>JARVIS AI</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at center, #062b35 0%, #021218 45%, #010609 100%);
+            color: #00f6ff;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background:
+                linear-gradient(rgba(0, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 1100px;
+            height: 100vh;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        header {
+            height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            border-bottom: 1px solid rgba(0, 246, 255, 0.25);
+            background: rgba(0, 10, 15, 0.55);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            text-shadow:
+                0 0 8px #00f6ff,
+                0 0 25px #00f6ff;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #8ffcff;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff88;
+            box-shadow: 0 0 12px #00ff88;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .core-area {
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .core {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 2px solid #00f6ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow:
+                0 0 15px #00f6ff,
+                0 0 40px rgba(0, 246, 255, 0.6),
+                inset 0 0 30px rgba(0, 246, 255, 0.25);
+            animation: pulse 2.5s infinite ease-in-out;
+        }
+
+        .core::before,
+        .core::after {
+            content: "";
+            position: absolute;
+            border: 1px solid rgba(0, 246, 255, 0.65);
+            border-radius: 50%;
+        }
+
+        .core::before {
+            width: 190px;
+            height: 190px;
+            animation: rotate 8s linear infinite;
+        }
+
+        .core::after {
+            width: 220px;
+            height: 220px;
+            border-style: dashed;
+            animation: rotateReverse 12s linear infinite;
+        }
+
+        .core-inner {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffffff 0%, #00f6ff 15%, #008ea0 45%, transparent 72%);
+            box-shadow: 0 0 35px #00f6ff;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% {
+                transform: scale(1.08);
+                filter: brightness(1.35);
+            }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes rotateReverse {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+
+        .chat {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            padding: 10px 20px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #00d9e8 transparent;
+        }
+
+        .message {
+            display: flex;
+            margin: 10px 0;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .bubble {
+            max-width: 75%;
+            padding: 13px 17px;
+            border-radius: 15px;
+            line-height: 1.5;
+            font-size: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .assistant .bubble {
+            background: rgba(0, 220, 240, 0.08);
+            border: 1px solid rgba(0, 246, 255, 0.35);
+            box-shadow: 0 0 15px rgba(0, 246, 255, 0.08);
+        }
+
+        .user .bubble {
+            background: rgba(0, 246, 255, 0.16);
+            border: 1px solid rgba(0, 246, 255, 0.5);
+            color: white;
+        }
+
+        .typing {
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+        .controls {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 15px 20px 22px;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 10, 15, 0.8);
+            border: 1px solid rgba(0, 246, 255, 0.35);
+            border-radius: 16px;
+            padding: 8px;
+            box-shadow: 0 0 20px rgba(0, 246, 255, 0.08);
+        }
+
+        #input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: white;
+            font-size: 16px;
+            padding: 12px;
+        }
+
+        #input::placeholder {
+            color: rgba(150, 245, 255, 0.5);
+        }
+
+        button {
+            border: 1px solid rgba(0, 246, 255, 0.6);
+            background: rgba(0, 246, 255, 0.1);
+            color: #00f6ff;
+            border-radius: 12px;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: rgba(0, 246, 255, 0.25);
+            box-shadow: 0 0 15px rgba(0, 246, 255, 0.35);
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        #micButton {
+            font-size: 18px;
+            width: 50px;
+        }
+
+        .quick-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            overflow-x: auto;
+        }
+
+        .quick-buttons button {
+            white-space: nowrap;
+            font-size: 12px;
+            padding: 8px 12px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: rgba(140, 240, 250, 0.45);
+            padding-bottom: 8px;
+        }
+
+        @media (max-width: 700px) {
+            header {
+                height: 60px;
+                padding: 0 15px;
+            }
+
+            .logo {
+                font-size: 21px;
+            }
+
+            .core-area {
+                height: 220px;
+            }
+
+            .core {
+                width: 110px;
+                height: 110px;
+            }
+
+            .core::before {
+                width: 145px;
+                height: 145px;
+            }
+
+            .core::after {
+                width: 170px;
+                height: 170px;
+            }
+
+            .core-inner {
+                width: 52px;
+                height: 52px;
+            }
+
+            .bubble {
+                max-width: 88%;
+            }
+
+            .input-area {
+                gap: 5px;
+            }
+
+            button {
+                padding: 9px 11px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <header>
+        <div class="logo">JARVIS</div>
+
+        <div class="status">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">ONLINE</span>
+        </div>
+    </header>
+
+    <main>
+
+        <div class="core-area">
+            <div class="core">
+                <div class="core-inner"></div>
+            </div>
+        </div>
+
+        <div class="chat" id="chat">
+
+            <div class="message assistant">
+                <div class="bubble">
+                    Olá! Eu sou o JARVIS. 🤖
+                    
+                    Estou ligado ao sistema de IA.
+                    Podes escrever uma pergunta ou usar o microfone.
+                </div>
+            </div>
+
+        </div>
+
+        <div class="controls">
+
+            <div class="input-area">
+
+                <input
+                    id="input"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Fala comigo..."
+                >
+
+                <button id="micButton" title="Falar">🎤</button>
+
+                <button id="sendButton">
+                    Enviar
+                </button>
+
+            </div>
+
+            <div class="quick-buttons">
+
+                <button onclick="comandoRapido('Que horas são?')">
+                    🕐 Hora
+                </button>
+
+                <button onclick="comandoRapido('Que dia é hoje?')">
+                    📅 Data
+                </button>
+
+                <button onclick="comandoRapido('Conta-me uma piada')">
+                    😂 Piada
+                </button>
+
+                <button onclick="comandoRapido('Quem és tu?')">
+                    🤖 Quem és?
+                </button>
+
+                <button onclick="comandoRapido('Ajuda')">
+                    ❓ Ajuda
+                </button>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <div class="footer">
+        JARVIS AI • GitHub Pages + Cloudflare Workers AI
+    </div>
+
+</div>
+
+
+<script>
+
+    // =====================================================
+    // CONFIGURAÇÃO
+    // =====================================================
+
+    const AI_URL =
+        "https://jarvis.2024guiteles.workers.dev/";
+
+    const input =
+        document.getElementById("input");
+
+    const chat =
+        document.getElementById("chat");
+
+    const sendButton =
+        document.getElementById("sendButton");
+
+    const micButton =
+        document.getElementById("micButton");
+
+    const statusText =
+        document.getElementById("statusText");
+
+    const statusDot =
+        document.getElementById("statusDot");
+
+
+    // =====================================================
+    // HISTÓRICO DA CONVERSA
+    // =====================================================
+
+    let historico = [];
+
+
+    // =====================================================
+    // MOSTRAR MENSAGEM
+    // =====================================================
+
+    function mostrarMensagem(texto, tipo) {
+
+        const message =
+            document.createElement("div");
+
+        message.className =
+            "message " + tipo;
+
+        const bubble =
+            document.createElement("div");
+
+        bubble.className =
+            "bubble";
+
+        bubble.textContent =
+            texto;
+
+        message.appendChild(bubble);
+
+        chat.appendChild(message);
+
+        chat.scrollTop =
+            chat.scrollHeight;
+    }
+
+
+    // =====================================================
+    // JARVIS A FALAR
+    // =====================================================
+
+    function falar(texto) {
+
+        if (!("speechSynthesis" in window)) {
+            return;
+        }
+
+        speechSynthesis.cancel();
+
+        const voz =
+            new SpeechSynthesisUtterance(texto);
+
+        voz.lang = "pt-PT";
+
+        voz.rate = 1;
+        voz.pitch = 1;
+
+        speechSynthesis.speak(voz);
+    }
+
+
+    // =====================================================
+    // ESTADO
+    // =====================================================
+
+    function estadoPensando() {
+
+        statusText.textContent =
+            "A PENSAR...";
+
+        statusDot.style.background =
+            "#ffff00";
+
+        statusDot.style.boxShadow =
+            "0 0 12px #ffff00";
+    }
+
+
+    function estadoOnline() {
+
+        statusText.textContent =
+            "ONLINE";
+
+        statusDot.style.background =
+            "#00ff88";
+
+        statusDot.style.boxShadow =
+            "0 0 12px #00ff88";
+    }
+
+
+    function estadoErro() {
+
+        statusText.textContent =
+            "ERRO";
+
+        statusDot.style.background =
+            "#ff3333";
+
+        statusDot.style.boxShadow =
+            "0 0 12px #ff3333";
+    }
+
+
+    // =====================================================
+    // COMANDOS LOCAIS
+    // =====================================================
+
+    function comandoLocal(pergunta) {
+
+        const texto =
+            pergunta.toLowerCase().trim();
+
+
+        // HORA
+
+        if (
+            texto.includes("que horas") ||
+            texto === "hora" ||
+            texto.includes("horas são")
+        ) {
+
+            const agora =
+                new Date();
+
+            return "São " +
+                agora.toLocaleTimeString(
+                    "pt-PT",
+                    {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }
+                ) + ".";
+        }
+
+
+        // DATA
+
+        if (
+            texto.includes("que dia") ||
+            texto.includes("data de hoje") ||
+            texto === "data"
+        ) {
+
+            const hoje =
+                new Date();
+
+            return "Hoje é " +
+                hoje.toLocaleDateString(
+                    "pt-PT",
+                    {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric"
+                    }
+                ) + ".";
+        }
+
+
+        // QUEM É
+
+        if (
+            texto.includes("quem és") ||
+            texto.includes("quem e") ||
+            texto.includes("o que és")
+        ) {
+
+            return "Eu sou o JARVIS, o teu assistente virtual de inteligência artificial.";
+        }
+
+
+        // OLÁ
+
+        if (
+            texto === "olá" ||
+            texto === "ola" ||
+            texto.includes("bom dia") ||
+            texto.includes("boa tarde") ||
+            texto.includes("boa noite")
+        ) {
+
+            return "Olá! É bom falar contigo. Como posso ajudar?";
+        }
+
+
+        // PIADA
+
+        if (
+            texto.includes("piada") ||
+            texto.includes("faz-me rir")
+        ) {
+
+            const piadas = [
+
+                "Porque é que o computador foi ao médico? Porque tinha um vírus! 😂",
+
+                "O que diz um computador quando está com frio? Fecha as Windows! 😂",
+
+                "Porque é que o programador confundiu Halloween com Natal? Porque OCT 31 = DEC 25. 😂"
+
+            ];
+
+            return piadas[
+                Math.floor(
+                    Math.random() * piadas.length
+                )
+            ];
+        }
+
+
+        // AJUDA
+
+        if (
+            texto === "ajuda" ||
+            texto.includes("o que podes fazer")
+        ) {
+
+            return "Posso conversar contigo, responder a perguntas, ajudar com programação, jogos, tecnologia, explicar assuntos e muito mais.";
+        }
+
+
+        // GOOGLE
+
+        if (
+            texto.startsWith("pesquisa ")
+        ) {
+
+            const pesquisa =
+                pergunta.substring(9).trim();
+
+            if (pesquisa) {
+
+                window.open(
+                    "https://www.google.com/search?q=" +
+                    encodeURIComponent(pesquisa),
+                    "_blank"
+                );
+
+                return "Abri uma pesquisa no Google sobre " +
+                    pesquisa + ".";
+            }
+        }
+
+
+        // YOUTUBE
+
+        if (
+            texto.startsWith("youtube ")
+        ) {
+
+            const pesquisa =
+                pergunta.substring(8).trim();
+
+            if (pesquisa) {
+
+                window.open(
+                    "https://www.youtube.com/results?search_query=" +
+                    encodeURIComponent(pesquisa),
+                    "_blank"
+                );
+
+                return "Abri o YouTube e procurei por " +
+                    pesquisa + ".";
+            }
+        }
+
+
+        return null;
+    }
+
+
+    // =====================================================
+    // PERGUNTAR À IA
+    // =====================================================
+
+    async function perguntarIA(pergunta) {
+
+        const mensagens =
+            [
+                ...historico,
+                {
+                    role: "user",
+                    content: pergunta
+                }
+            ];
+
+
+        const resposta =
+            await fetch(
+                AI_URL,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        messages: mensagens
+                    })
+                }
+            );
+
+
+        if (!resposta.ok) {
+
+            let erroTexto =
+                "Erro HTTP " +
+                resposta.status;
+
+            try {
+
+                const erro =
+                    await resposta.json();
+
+                if (erro.erro) {
+                    erroTexto +=
+                        ": " + erro.erro;
+                }
+
+                if (erro.detalhe) {
+                    erroTexto +=
+                        " - " + erro.detalhe;
+                }
+
+            } catch (e) {}
+
+            throw new Error(
+                erroTexto
+            );
+        }
+
+
+        const dados =
+            await resposta.json();
+
+
+        if (!dados.resposta) {
+
+            throw new Error(
+                "O Worker não devolveu uma resposta."
+            );
+        }
+
+
+        return dados.resposta;
+    }
+
+
+    // =====================================================
+    // PROCESSAR PERGUNTA
+    // =====================================================
+
+    async function processarComando(pergunta) {
+
+        pergunta =
+            pergunta.trim();
+
+        if (!pergunta) {
+            return;
+        }
+
+
+        mostrarMensagem(
+            pergunta,
+            "user"
+        );
+
+
+        input.value = "";
+
+        estadoPensando();
+
+
+        // Primeiro verifica comandos locais
+
+        const local =
+            comandoLocal(pergunta);
+
+
+        if (local !== null) {
+
+            historico.push(
+                {
+                    role: "user",
+                    content: pergunta
+                }
+            );
+
+            historico.push(
+                {
+                    role: "assistant",
+                    content: local
+                }
+            );
+
+            mostrarMensagem(
+                local,
+                "assistant"
+            );
+
+            falar(local);
+
+            estadoOnline();
+
+            return;
+        }
+
+
+        // Indicador temporário
+
+        const thinking =
+            document.createElement("div");
+
+        thinking.className =
+            "message assistant";
+
+        thinking.id =
+            "thinking";
+
+        thinking.innerHTML =
+            '<div class="bubble typing">JARVIS está a pensar...</div>';
+
+        chat.appendChild(thinking);
+
+        chat.scrollTop =
+            chat.scrollHeight;
+
+
+        try {
+
+            const resposta =
+                await perguntarIA(
+                    pergunta
+                );
+
+
+            const elemento =
+                document.getElementById(
+                    "thinking"
+                );
+
+            if (elemento) {
+                elemento.remove();
+            }
+
+
+            historico.push(
+                {
+                    role: "user",
+                    content: pergunta
+                }
+            );
+
+            historico.push(
+                {
+                    role: "assistant",
+                    content: resposta
+                }
+            );
+
+
+            mostrarMensagem(
+                resposta,
+                "assistant"
+            );
+
+            falar(resposta);
+
+            estadoOnline();
+
+        } catch (erro) {
+
+            const elemento =
+                document.getElementById(
+                    "thinking"
+                );
+
+            if (elemento) {
+                elemento.remove();
+            }
+
+
+            console.error(
+                "Erro JARVIS:",
+                erro
+            );
+
+
+            const mensagem =
+                "Não consegui contactar a IA. " +
+                "Verifica se o Worker está publicado e se o Workers AI está configurado.";
+
+
+            mostrarMensagem(
+                mensagem,
+                "assistant"
+            );
+
+            estadoErro();
+
+        }
+
+    }
+
+
+    // =====================================================
+    // BOTÃO ENVIAR
+    // =====================================================
+
+    sendButton.addEventListener(
+        "click",
+        function () {
+
+            processarComando(
+                input.value
+            );
+
+        }
+    );
+
+
+    // =====================================================
+    // ENTER
+    // =====================================================
+
+    input.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                event.preventDefault();
+
+                processarComando(
+                    input.value
+                );
+            }
+
+        }
+    );
+
+
+    // =====================================================
+    // BOTÕES RÁPIDOS
+    // =====================================================
+
+    function comandoRapido(texto) {
+
+        processarComando(
+            texto
+        );
+
+    }
+
+
+    // =====================================================
+    // RECONHECIMENTO DE VOZ
+    // =====================================================
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+
+    if (SpeechRecognition) {
+
+        const recognition =
+            new SpeechRecognition();
+
+        recognition.lang =
+            "pt-PT";
+
+        recognition.continuous =
+            false;
+
+        recognition.interimResults =
+            false;
+
+
+        micButton.addEventListener(
+            "click",
+            function () {
+
+                try {
+
+                    recognition.start();
+
+                    micButton.textContent =
+                        "🔴";
+
+                    statusText.textContent =
+                        "A OUVIR...";
+
+                } catch (erro) {
+
+                    console.log(
+                        erro
+                    );
+
+                }
+
+            }
+        );
+
+
+        recognition.onresult =
+            function (event) {
+
+                const texto =
+                    event.results[0][0].transcript;
+
+                input.value =
+                    texto;
+
+                processarComando(
+                    texto
+                );
+
+            };
+
+
+        recognition.onend =
+            function () {
+
+                micButton.textContent =
+                    "🎤";
+
+                estadoOnline();
+
+            };
+
+
+        recognition.onerror =
+            function () {
+
+                micButton.textContent =
+                    "🎤";
+
+                estadoOnline();
+
+            };
+
+    } else {
+
+        micButton.disabled =
+            true;
+
+        micButton.title =
+            "O reconhecimento de voz não é suportado neste navegador.";
+
+    }
+
+
+    // =====================================================
+    // TESTE INICIAL
+    // =====================================================
+
+    console.log(
+        "JARVIS iniciado."
+    );
+
+    console.log(
+        "Worker:",
+        AI_URL
+    );
+
+</script>
+
+</body>
+</html>
